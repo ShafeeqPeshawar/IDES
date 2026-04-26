@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Profile – igniUp</title>
+    <link rel="stylesheet" href="auth.css" />
+    <style>
+      .profile-wrap { min-height: 100vh; display: flex; flex-direction: column; background: #f0f2f5; }
+      body.dark .profile-wrap { background: #1a1a1a; }
+      .profile-topbar {
+        display: flex; align-items: center; justify-content: space-between; padding: 12px 20px;
+        background: #fff; border-bottom: 1px solid #e5e7eb;
+      }
+      body.dark .profile-topbar { background: #252525; border-bottom-color: #444; }
+      .profile-topbar .auth-back { margin-right: 8px; }
+      .profile-layout {
+        display: grid;
+        grid-template-columns: 220px 1fr 220px;
+        gap: 0;
+        flex: 1;
+        min-height: 0;
+        max-width: 1400px;
+        margin: 0 auto;
+        width: 100%;
+        align-items: stretch;
+      }
+      @media (max-width: 900px) {
+        .profile-layout { grid-template-columns: 1fr; }
+      }
+      .profile-panel {
+        padding: 24px 20px;
+        border-right: 1px solid #e5e7eb;
+        background: #fff;
+        overflow-y: hidden;
+      }
+      body.dark .profile-panel { background: #252525; border-right-color: #444; }
+      .profile-panel:last-child { border-right: none; border-left: 1px solid #e5e7eb; }
+      body.dark .profile-panel:last-child { border-left-color: #444; }
+      .profile-panel-center {
+        padding: 24px 28px;
+        min-width: 0;
+        min-height: 0;
+        overflow-y: auto;
+        border-left: 1px solid #e5e7eb;
+        border-right: 1px solid #e5e7eb;
+        background: #fafafa;
+      }
+      body.dark .profile-panel-center { background: #1e1e1e; border-color: #444; }
+      .profile-name { font-size: 1.25rem; font-weight: 700; color: #111; margin-bottom: 4px; }
+      body.dark .profile-name { color: #fff; }
+      .profile-email { font-size: 0.85rem; color: #6b7280; word-break: break-all; margin-bottom: 16px; }
+      body.dark .profile-email { color: #aaa; }
+      .profile-points { font-size: 1.1rem; font-weight: 600; color: #1976d2; margin-bottom: 8px; }
+      body.dark .profile-points { color: #42a5f5; }
+      .profile-current-badge-name { font-size: 0.9rem; font-weight: 600; color: #374151; margin-bottom: 14px; }
+      body.dark .profile-current-badge-name { color: #d0d0d0; }
+      .profile-badge-progress { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+      .profile-badge-img {
+        width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+        font-size: 1.5rem; flex-shrink: 0; background: #e8f5e9; border: 2px solid #2e7d32;
+      }
+      body.dark .profile-badge-img { background: #1b3d1f; border-color: #4caf50; }
+      .profile-badge-img.next { background: #f5f5f5; border: 2px solid #bdbdbd; opacity: 0.9; }
+      body.dark .profile-badge-img.next { background: #333; border-color: #555; }
+      .profile-progress-track {
+        flex: 1; height: 12px; background: #e0e0e0; border-radius: 6px; overflow: hidden;
+      }
+      body.dark .profile-progress-track { background: #444; }
+      .profile-progress-fill {
+        height: 100%; background: #2e7d32; border-radius: 6px; transition: width 0.3s ease;
+      }
+      .profile-next-badge-msg { font-size: 0.8rem; color: #6b7280; margin-bottom: 20px; line-height: 1.4; }
+      body.dark .profile-next-badge-msg { color: #aaa; }
+      .profile-next-badge-msg .highlight { font-weight: 600; color: #2e7d32; }
+      body.dark .profile-next-badge-msg .highlight { color: #66bb6a; }
+      .btn-change-pw { width: 100%; padding: 10px 16px; background: #1976d2; color: #fff; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.9rem; }
+      .btn-change-pw:hover { background: #1565c0; }
+      .profile-msg { margin-top: 8px; font-size: 0.85rem; }
+      .profile-msg.success { color: #2e7d32; }
+      .profile-msg.error { color: #c62828; }
+      .panel-title { font-size: 0.9rem; font-weight: 600; color: #374151; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.04em; }
+      body.dark .panel-title { color: #d0d0d0; }
+      .programs-list { list-style: none; margin: 0; padding: 0; }
+      .program-card {
+        background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; margin-bottom: 20px; overflow: hidden;
+      }
+      body.dark .program-card { background: #2d2d2d; border-color: #444; }
+      .program-card-toolbar {
+        display: flex; align-items: center; justify-content: flex-end; gap: 4px; padding: 8px 12px; background: #f5f5f5; border-bottom: 1px solid #e5e7eb;
+      }
+      body.dark .program-card-toolbar { background: #333; border-bottom-color: #444; }
+      .program-card-toolbar .icon-btn {
+        display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px;
+        border: none; background: transparent; color: #1976d2; cursor: pointer; border-radius: 8px;
+      }
+      .program-card-toolbar .icon-btn:hover { background: rgba(25, 118, 210, 0.12); }
+      body.dark .program-card-toolbar .icon-btn { color: #42a5f5; }
+      .program-card-toolbar .icon-btn.delete-btn { color: #c62828; }
+      .program-card-toolbar .icon-btn.delete-btn:hover { background: rgba(198, 40, 40, 0.12); }
+      .program-card-toolbar .icon-btn svg { width: 18px; height: 18px; }
+      .program-card-code {
+        padding: 16px; margin: 0; font-family: "Consolas", "Monaco", "Courier New", monospace;
+        font-size: 13px; line-height: 1.5; color: #111; background: #fff; overflow-x: auto; white-space: pre;
+      }
+      body.dark .program-card-code { background: #1e1e1e; color: #d4d4d4; border-color: #444; }
+      .programs-empty { color: #6b7280; font-size: 0.9rem; padding: 24px 0; }
+      body.dark .programs-empty { color: #aaa; }
+      .badges-list { list-style: none; margin: 0; padding: 0; }
+      .badge-item {
+        display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #e5e7eb;
+      }
+      body.dark .badge-item { border-bottom-color: #444; }
+      .badge-item:last-child { border-bottom: none; }
+      .badge-icon { font-size: 1.5rem; width: 36px; text-align: center; flex-shrink: 0; }
+      .badge-item.locked .badge-icon { opacity: 0.4; }
+      .badge-item.locked .badge-name { color: #9ca3af; }
+      body.dark .badge-item.locked .badge-name { color: #666; }
+      .badge-info { flex: 1; min-width: 0; }
+      .badge-name { font-size: 0.9rem; font-weight: 600; color: #111; }
+      body.dark .badge-name { color: #e0e0e0; }
+      .badge-pts { font-size: 0.75rem; color: #6b7280; margin-top: 2px; }
+      body.dark .badge-pts { color: #888; }
+      .auth-form .auth-input-wrap { margin-bottom: 14px; }
+
+      .badge-strip-wrap { margin: -24px -28px 20px -28px; padding: 16px 28px; }
+      body.dark .badge-strip-wrap { }
+      .badge-strip-title { font-size: 0.9rem; font-weight: 600; color: #374151; margin-bottom: 12px; text-align: center; letter-spacing: 0.04em; }
+      body.dark .badge-strip-title { color: #d0d0d0; }
+      .badge-strip-empty { font-size: 0.85rem; color: #9ca3af; margin-bottom: 8px; text-align: center; }
+      body.dark .badge-strip-empty { color: #666; }
+      .badge-strip { display: flex; flex-wrap: wrap; gap: 18px; justify-content: center; overflow-x: auto; overflow-y: hidden; padding-bottom: 8px; scrollbar-width: thin; }
+      .badge-strip::-webkit-scrollbar { height: 6px; }
+      .badge-strip::-webkit-scrollbar-track { background: #f0f0f0; border-radius: 3px; }
+      body.dark .badge-strip::-webkit-scrollbar-track { background: #333; }
+      .badge-strip::-webkit-scrollbar-thumb { background: #bdbdbd; border-radius: 3px; }
+      .badge-thumb-wrap {
+        flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer;
+        background: none; border: none; padding: 0; font: inherit; color: inherit;
+      }
+      .badge-thumb {
+        width: 72px; height: 72px; display: flex; align-items: center; justify-content: center;
+        font-size: 2.25rem; transition: transform 0.2s;
+      }
+      .badge-thumb-wrap:hover .badge-thumb { transform: scale(1.08); }
+      .badge-thumb-name { font-size: 0.9rem; font-weight: bold; font-style: normal; color: #374151; text-align: center; max-width: 90px; line-height: 1.2; }
+      body.dark .badge-thumb-name { color: #d0d0d0; }
+
+      .badge-modal-overlay {
+        position: fixed; inset: 0; z-index: 1000; display: none; align-items: center; justify-content: center; padding: 20px;
+        background: rgba(0,0,0,0.4); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+      }
+      .badge-modal-overlay.show { display: flex; }
+      .badge-modal {
+        background: #fff; border-radius: 24px; padding: 36px 32px; max-width: 480px; width: 100%; position: relative;
+        box-shadow: 0 24px 80px rgba(0,0,0,0.18);
+      }
+      body.dark .badge-modal { background: #2d2d2d; box-shadow: 0 24px 80px rgba(0,0,0,0.5); }
+      .badge-modal-close {
+        position: absolute; top: 14px; right: 14px; width: 42px; height: 42px; border: none; background: transparent; cursor: pointer;
+        color: #555; font-size: 1.5rem; line-height: 1; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 50%;
+      }
+      .badge-modal-close:hover { background: rgba(0,0,0,0.08); color: #111; }
+      body.dark .badge-modal-close { color: #aaa; }
+      body.dark .badge-modal-close:hover { background: rgba(255,255,255,0.12); color: #fff; }
+      .badge-modal-badge-wrap { display: flex; justify-content: center; margin-bottom: 22px; }
+      .badge-modal-badge {
+        width: 170px; height: 170px; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center;
+        background: linear-gradient(145deg, #e8f5e9 0%, #c8e6c9 100%); border: 4px solid #2e7d32; box-shadow: inset 0 2px 10px rgba(255,255,255,0.6);
+      }
+      body.dark .badge-modal-badge { background: linear-gradient(145deg, #1b3d1f 0%, #2e7d32 50%); border-color: #4caf50; }
+      .badge-modal-badge .badge-emoji { font-size: 3.75rem; margin-bottom: 6px; }
+      .badge-modal-badge .badge-label { font-size: 0.75rem; font-weight: 700; color: #1b5e20; text-transform: uppercase; letter-spacing: 0.05em; max-width: 110px; text-align: center; line-height: 1.2; }
+      body.dark .badge-modal-badge .badge-label { color: #a5d6a7; }
+      .badge-modal-badge.locked { background: linear-gradient(145deg, #f5f5f5 0%, #e0e0e0 100%); border-color: #9e9e9e; }
+      body.dark .badge-modal-badge.locked { background: linear-gradient(145deg, #333 0%, #444 100%); border-color: #555; }
+      .badge-modal-name { font-size: 1.65rem; font-weight: 700; text-align: center; margin-bottom: 12px; color: #374151; }
+      body.dark .badge-modal-name { color: #fff; }
+      .badge-modal-msg { font-size: 1.05rem; text-align: center; color: #4b5563; margin-bottom: 20px; line-height: 1.55; }
+      body.dark .badge-modal-msg { color: #bbb; }
+      .badge-modal-msg .pts { font-weight: 700; color: #1976d2; }
+      body.dark .badge-modal-msg .pts { color: #42a5f5; }
+      .badge-modal-share-strip {
+        background: #f3f4f6; border-radius: 14px; padding: 18px 16px; margin-top: 6px;
+      }
+      body.dark .badge-modal-share-strip { background: #3a3a3a; }
+      .badge-modal-share-text { font-size: 0.95rem; text-align: center; color: #4b5563; margin-bottom: 14px; }
+      body.dark .badge-modal-share-text { color: #9ca3af; }
+      .badge-modal-share-icons { display: flex; justify-content: center; gap: 14px; flex-wrap: wrap; }
+      .badge-share-btn {
+        width: 56px; height: 56px; border-radius: 50%; border: none; cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+        transition: transform 0.2s, box-shadow 0.2s; text-decoration: none; flex-shrink: 0;
+      }
+      .badge-share-btn:hover { transform: scale(1.08); box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
+      .badge-share-btn.wa { background: #25D366; color: #fff; }
+      .badge-share-btn.linkedin { background: #0A66C2; color: #fff; }
+      .badge-share-btn.copy { background: #e5e7eb; color: #374151; }
+      .badge-share-btn.download { background: #e5e7eb; color: #374151; }
+      body.dark .badge-share-btn.copy { background: #555; color: #e0e0e0; }
+      body.dark .badge-share-btn.download { background: #555; color: #e0e0e0; }
+      .badge-share-btn svg { width: 28px; height: 28px; }
+
+      .pw-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1001; display: none; align-items: center; justify-content: center; padding: 20px; }
+      .pw-modal-overlay.show { display: flex; }
+      .pw-modal { background: #fff; border-radius: 16px; padding: 28px 32px; max-width: 400px; width: 100%; position: relative; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
+      body.dark .pw-modal { background: #2d2d2d; }
+      .pw-modal-close { position: absolute; top: 12px; right: 12px; width: 36px; height: 36px; border: none; background: transparent; cursor: pointer; color: #666; font-size: 1.5rem; line-height: 1; padding: 0; border-radius: 8px; }
+      .pw-modal-close:hover { background: rgba(0,0,0,0.06); color: #111; }
+      body.dark .pw-modal-close { color: #aaa; }
+      body.dark .pw-modal-close:hover { background: rgba(255,255,255,0.1); color: #fff; }
+      .pw-modal h3 { margin: 0 0 20px 0; font-size: 1.25rem; color: #111; }
+      body.dark .pw-modal h3 { color: #fff; }
+      .pw-modal .auth-form { margin-bottom: 0; }
+      .pw-modal .profile-msg { margin-top: 10px; }
+
+      .delete-confirm-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1002; display: none; align-items: center; justify-content: center; padding: 20px; }
+      .delete-confirm-overlay.show { display: flex; }
+      .delete-confirm-dialog {
+        background: #fff; border-radius: 16px; padding: 28px 24px; max-width: 400px; width: 100%;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.2); text-align: center;
+      }
+      body.dark .delete-confirm-dialog { background: #2d2d2d; }
+      .delete-confirm-icon-wrap {
+        width: 56px; height: 56px; border-radius: 50%; background: rgba(198, 40, 40, 0.12);
+        display: inline-flex; align-items: center; justify-content: center; margin-bottom: 16px;
+      }
+      .delete-confirm-icon-wrap svg { width: 32px; height: 32px; color: #c62828; }
+      body.dark .delete-confirm-icon-wrap { background: rgba(198, 40, 40, 0.25); }
+      body.dark .delete-confirm-icon-wrap svg { color: #ef5350; }
+      .delete-confirm-title { font-size: 1.25rem; font-weight: 700; color: #111; margin-bottom: 10px; }
+      body.dark .delete-confirm-title { color: #fff; }
+      .delete-confirm-msg { font-size: 0.95rem; color: #555; line-height: 1.5; margin-bottom: 24px; }
+      body.dark .delete-confirm-msg { color: #bbb; }
+      .delete-confirm-btns { display: flex; gap: 12px; justify-content: center; }
+      .delete-confirm-btns button { flex: 1; padding: 12px 20px; border: none; border-radius: 10px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: opacity 0.2s; }
+      .delete-confirm-btns button:hover { opacity: 0.9; }
+      .delete-confirm-cancel { background: #e0e0e0; color: #333; }
+      body.dark .delete-confirm-cancel { background: #555; color: #e0e0e0; }
+      .delete-confirm-confirm { background: #c62828; color: #fff; }
+      .delete-confirm-confirm:hover { background: #b71c1c; }
+    </style>
+  </head>
+  <body class="light">
+    <div class="profile-wrap">
+      <header class="profile-topbar">
+        <a href="index.html" class="auth-back" aria-label="Back to home">
+          <svg class="auth-back-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        </a>
+        <a href="index.html" class="auth-btn-create">Home</a>
+      </header>
+
+      <div class="profile-layout">
+        <aside class="profile-panel">
+          <h2 class="panel-title">Profile</h2>
+          <div class="profile-name" id="profileName">—</div>
+          <div class="profile-email" id="profileEmail">—</div>
+          <div class="profile-points">You have <span id="profilePoints">0</span> Points</div>
+          <div class="profile-current-badge-name" id="profileCurrentBadgeName">Current: —</div>
+          <div class="profile-badge-progress">
+            <div class="profile-badge-img" id="profileBadgeCurrent" title="Current badge">—</div>
+            <div class="profile-progress-track">
+              <div class="profile-progress-fill" id="profileProgressFill" style="width: 0%"></div>
+            </div>
+            <div class="profile-badge-img next" id="profileBadgeNext" title="Next badge">—</div>
+          </div>
+          <div class="profile-next-badge-msg" id="profileNextBadgeMsg">Earn 10 points to unlock your first badge.</div>
+          <button type="button" class="btn-change-pw" id="btnChangePw">Change password</button>
+        </aside>
+
+        <section class="profile-panel profile-panel-center">
+          <div class="badge-strip-wrap">
+            <h3 class="badge-strip-title">Your Achievements</h3>
+            <p class="badge-strip-empty" id="badgeStripEmpty" style="display:none">Run code successfully to earn badges.</p>
+            <div class="badge-strip" id="badgeStrip"></div>
+          </div>
+          <h2 class="panel-title">Saved programs</h2>
+          <p class="programs-empty" id="programsEmpty" style="display:none">No programs yet. Run code in the Python IDE and it will be saved here. Each successful run earns 10 points.</p>
+          <ul class="programs-list" id="programsList"></ul>
+        </section>
+
+        <aside class="profile-panel">
+          <h2 class="panel-title">Achievements & Badges</h2>
+          <ul class="badges-list" id="badgesList"></ul>
+        </aside>
+      </div>
+
+      <div class="pw-modal-overlay" id="pwModal">
+        <div class="pw-modal">
+          <button type="button" class="pw-modal-close" id="pwModalClose" aria-label="Close">×</button>
+          <h3>Change password</h3>
+          <form class="auth-form" id="changePwForm">
+            <div class="auth-input-wrap">
+              <span class="auth-input-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+              <input type="password" id="currentPassword" class="auth-input" placeholder="Current password" required autocomplete="current-password" />
+            </div>
+            <div class="auth-input-wrap">
+              <span class="auth-input-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+              <input type="password" id="newPassword" class="auth-input" placeholder="New password (min 6)" required minlength="6" autocomplete="new-password" />
+            </div>
+            <div class="auth-input-wrap">
+              <span class="auth-input-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+              <input type="password" id="confirmPassword" class="auth-input" placeholder="Confirm new password" required minlength="6" autocomplete="new-password" />
+            </div>
+            <p class="profile-msg" id="changePwMsg" style="display:none"></p>
+            <button type="submit" class="auth-btn">Update password</button>
+          </form>
+        </div>
+      </div>
+
+      <footer class="auth-page-footer" style="margin-top: auto;">
+        <button type="button" class="auth-theme-btn" id="themeBtn" title="Toggle dark/light mode">
+          <span id="themeIcon">🌙</span>
+        </button>
+      </footer>
+    </div>
+
+    <div class="badge-modal-overlay" id="badgeModal">
+      <div class="badge-modal">
+        <button type="button" class="badge-modal-close" id="badgeModalClose" aria-label="Close">×</button>
+        <div class="badge-modal-badge-wrap">
+          <div class="badge-modal-badge" id="badgeModalBadge">
+            <span class="badge-emoji" id="badgeModalEmoji">✨</span>
+            <span class="badge-label" id="badgeModalLabel">First Code</span>
+          </div>
+        </div>
+        <h3 class="badge-modal-name" id="badgeModalName">First Code</h3>
+        <p class="badge-modal-msg" id="badgeModalMsg">You unlocked this badge for scoring <span class="pts" id="badgeModalPts">10</span> points.</p>
+        <div class="badge-modal-share-strip">
+          <p class="badge-modal-share-text" id="badgeModalShareText">Share your "First Code" badge on</p>
+          <div class="badge-modal-share-icons">
+            <a href="#" class="badge-share-btn wa" id="badgeShareWa" title="Share on WhatsApp" target="_blank" rel="noopener">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+            </a>
+            <a href="#" class="badge-share-btn linkedin" id="badgeShareLinkedIn" title="Share on LinkedIn" target="_blank" rel="noopener">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+            </a>
+            <button type="button" class="badge-share-btn copy" id="badgeShareCopy" title="Copy link">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            </button>
+            <button type="button" class="badge-share-btn download" id="badgeShareDownload" title="Download badge">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="delete-confirm-overlay" id="deleteConfirmOverlay">
+      <div class="delete-confirm-dialog">
+        <div class="delete-confirm-icon-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        </div>
+        <h3 class="delete-confirm-title">Are you sure?</h3>
+        <p class="delete-confirm-msg">Do you really want to delete this code snippet? This action cannot be undone.</p>
+        <div class="delete-confirm-btns">
+          <button type="button" class="delete-confirm-cancel" id="deleteConfirmCancel">Cancel</button>
+          <button type="button" class="delete-confirm-confirm" id="deleteConfirmConfirm">Confirm</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script>
+      (function () {
+        if (typeof window.isLoggedIn !== "function" || !window.isLoggedIn()) {
+          window.location.href = "authenticate.html?return=profile";
+          return;
+        }
+
+        var body = document.body;
+        var themeBtn = document.getElementById("themeBtn");
+        var themeIcon = document.getElementById("themeIcon");
+        var saved = localStorage.getItem("theme");
+        if (saved === "dark") {
+          body.classList.remove("light");
+          body.classList.add("dark");
+          themeIcon.textContent = "☀️";
+        } else {
+          body.classList.remove("dark");
+          body.classList.add("light");
+          themeIcon.textContent = "🌙";
+        }
+        themeBtn.addEventListener("click", function () {
+          if (body.classList.contains("light")) {
+            body.classList.remove("light");
+            body.classList.add("dark");
+            themeIcon.textContent = "☀️";
+            localStorage.setItem("theme", "dark");
+          } else {
+            body.classList.remove("dark");
+            body.classList.add("light");
+            themeIcon.textContent = "🌙";
+            localStorage.setItem("theme", "light");
+          }
+        });
+
+        var pendingDeleteId = null;
+        var deleteOverlay = document.getElementById("deleteConfirmOverlay");
+        var deleteCancelBtn = document.getElementById("deleteConfirmCancel");
+        var deleteConfirmBtn = document.getElementById("deleteConfirmConfirm");
+        function closeDeleteConfirm() {
+          pendingDeleteId = null;
+          if (deleteOverlay) deleteOverlay.classList.remove("show");
+        }
+        function openDeleteConfirm(id) {
+          pendingDeleteId = id;
+          if (deleteOverlay) deleteOverlay.classList.add("show");
+        }
+        if (deleteCancelBtn) deleteCancelBtn.addEventListener("click", closeDeleteConfirm);
+        if (deleteOverlay) deleteOverlay.addEventListener("click", function (e) { if (e.target === deleteOverlay) closeDeleteConfirm(); });
+        if (deleteConfirmBtn) {
+          deleteConfirmBtn.addEventListener("click", function () {
+            if (!pendingDeleteId) return;
+            var id = pendingDeleteId;
+            closeDeleteConfirm();
+            var base = window.API_BASE || "";
+            var headers = {};
+            if (typeof window.getAuthHeaders === "function") { var h = window.getAuthHeaders(); if (h && h.Authorization) headers.Authorization = h.Authorization; }
+            fetch(base + "/api/programs/" + id, { method: "DELETE", headers: headers })
+              .then(function (r) {
+                if (!r.ok) throw new Error("Delete failed");
+                loadPrograms();
+                return fetch(base + "/api/auth/me", { headers: headers }).then(function (r2) { return r2.ok ? r2.json() : {}; });
+              })
+              .then(function (data) {
+                if (data && typeof data.points !== "undefined") { setProfile(data); }
+              })
+              .catch(function () { alert("Failed to delete."); });
+          });
+        }
+
+        var BADGES = [
+          { name: "First Code", points: 10, icon: "✨" },
+          { name: "Coder", points: 30, icon: "🐍" },
+          { name: "Explorer", points: 50, icon: "🔍" },
+          { name: "Script Soldier", points: 100, icon: "🎖️" },
+          { name: "Builder", points: 200, icon: "🏗️" },
+          { name: "Syntax Explorer", points: 500, icon: "🏆" },
+          { name: "Master", points: 1000, icon: "👑" },
+        ];
+
+        var currentPoints = 0;
+        var selectedBadge = null;
+
+        function setProfile(data) {
+          var name = (data && data.name) ? data.name : (window.getStoredUser && window.getStoredUser() ? window.getStoredUser().name : null) || "—";
+          var email = (data && data.email) ? data.email : (window.getStoredUser && window.getStoredUser() ? window.getStoredUser().email : null) || "—";
+          var points = (data && typeof data.points === "number") ? data.points : 0;
+          currentPoints = points;
+          var nameEl = document.getElementById("profileName");
+          var emailEl = document.getElementById("profileEmail");
+          var pointsEl = document.getElementById("profilePoints");
+          if (nameEl) nameEl.textContent = name;
+          if (emailEl) emailEl.textContent = email;
+          if (pointsEl) pointsEl.textContent = points;
+
+          var currentBadge = null;
+          var nextBadge = null;
+          for (var i = BADGES.length - 1; i >= 0; i--) {
+            if (BADGES[i].points <= points) {
+              currentBadge = BADGES[i];
+              break;
+            }
+          }
+          for (var j = 0; j < BADGES.length; j++) {
+            if (BADGES[j].points > points) {
+              nextBadge = BADGES[j];
+              break;
+            }
+          }
+
+          var badgeNameEl = document.getElementById("profileCurrentBadgeName");
+          var badgeCurrentEl = document.getElementById("profileBadgeCurrent");
+          var badgeNextEl = document.getElementById("profileBadgeNext");
+          var progressFillEl = document.getElementById("profileProgressFill");
+          var nextMsgEl = document.getElementById("profileNextBadgeMsg");
+
+          if (badgeNameEl) {
+            badgeNameEl.textContent = currentBadge ? "Current: " + currentBadge.name : "Current: No badge yet";
+          }
+          if (badgeCurrentEl) {
+            badgeCurrentEl.textContent = currentBadge ? currentBadge.icon : "—";
+            badgeCurrentEl.title = currentBadge ? currentBadge.name : "No badge";
+          }
+          if (badgeNextEl) {
+            badgeNextEl.textContent = nextBadge ? nextBadge.icon : (currentBadge ? currentBadge.icon : "✨");
+            badgeNextEl.title = nextBadge ? "Next: " + nextBadge.name : "Top badge";
+          }
+
+          var progressPct = 0;
+          if (nextBadge) {
+            var fromPts = currentBadge ? currentBadge.points : 0;
+            var toPts = nextBadge.points;
+            progressPct = Math.min(100, Math.round(((points - fromPts) / (toPts - fromPts)) * 100));
+          } else {
+            progressPct = 100;
+          }
+          if (progressFillEl) progressFillEl.style.width = progressPct + "%";
+
+          if (nextMsgEl) {
+            if (nextBadge) {
+              var needed = nextBadge.points - points;
+              nextMsgEl.innerHTML = "Earn <span class=\"highlight\">" + needed + " points</span> to <strong>&ldquo;" + escapeHtml(nextBadge.name) + "&rdquo;</strong> Badge";
+            } else {
+              nextMsgEl.textContent = "You've reached the top badge!";
+            }
+          }
+
+          renderBadges();
+          renderBadgeStrip();
+        }
+
+        function renderBadgeStrip() {
+          var strip = document.getElementById("badgeStrip");
+          var emptyEl = document.getElementById("badgeStripEmpty");
+          if (!strip) return;
+          strip.innerHTML = "";
+          BADGES.forEach(function (b, idx) {
+            if (currentPoints < b.points) return;
+            var wrap = document.createElement("button");
+            wrap.type = "button";
+            wrap.className = "badge-thumb-wrap";
+            wrap.title = b.name + " (" + b.points + " pts)";
+            wrap.setAttribute("data-badge-index", idx);
+            wrap.innerHTML = "<span class=\"badge-thumb\">" + b.icon + "</span><span class=\"badge-thumb-name\">" + escapeHtml(b.name) + "</span>";
+            wrap.addEventListener("click", function () { openBadgeModal(idx); });
+            strip.appendChild(wrap);
+          });
+          if (emptyEl) emptyEl.style.display = strip.children.length === 0 ? "block" : "none";
+        }
+
+        function openBadgeModal(badgeIndex) {
+          var b = BADGES[badgeIndex];
+          if (!b) return;
+          selectedBadge = b;
+          var unlocked = currentPoints >= b.points;
+          document.getElementById("badgeModalEmoji").textContent = b.icon;
+          document.getElementById("badgeModalLabel").textContent = b.name;
+          document.getElementById("badgeModalName").textContent = b.name;
+          var msgEl = document.getElementById("badgeModalMsg");
+          var badgeEl = document.getElementById("badgeModalBadge");
+          if (unlocked) {
+            msgEl.innerHTML = "You unlocked this badge for scoring <span class=\"pts\" id=\"badgeModalPts\">" + b.points + "</span> points.";
+            badgeEl.classList.remove("locked");
+          } else {
+            msgEl.innerHTML = "Unlock at <span class=\"pts\" id=\"badgeModalPts\">" + b.points + "</span> points.";
+            badgeEl.classList.add("locked");
+          }
+          document.getElementById("badgeModalShareText").textContent = "Share your \"" + b.name + "\" badge on";
+          var shareWa = document.getElementById("badgeShareWa");
+          var shareLi = document.getElementById("badgeShareLinkedIn");
+          var shareCopy = document.getElementById("badgeShareCopy");
+          var shareDl = document.getElementById("badgeShareDownload");
+          var shareUrl = (window.location.origin || "https://igniup.com") + (window.location.pathname || "/profile.html");
+          var shareText = "I earned the \"" + b.name + "\" badge on igniUp! " + b.points + " points.";
+          shareWa.href = "https://wa.me/?text=" + encodeURIComponent(shareText + " " + shareUrl);
+          shareLi.href = "https://www.linkedin.com/sharing/share-offsite/?url=" + encodeURIComponent(shareUrl) + "&summary=" + encodeURIComponent(shareText);
+          shareCopy.onclick = function () {
+            navigator.clipboard.writeText(shareText + " " + shareUrl).then(function () {
+              var t = shareCopy.title;
+              shareCopy.title = "Copied!";
+              setTimeout(function () { shareCopy.title = t; }, 1500);
+            });
+          };
+          shareDl.onclick = function () { downloadBadgeImage(b); };
+          document.getElementById("badgeModal").classList.add("show");
+        }
+
+        function closeBadgeModal() {
+          document.getElementById("badgeModal").classList.remove("show");
+        }
+
+        function downloadBadgeImage(b) {
+          var canvas = document.createElement("canvas");
+          var size = 280;
+          canvas.width = size;
+          canvas.height = size;
+          var ctx = canvas.getContext("2d");
+          var cx = size / 2, cy = size / 2, r = 120;
+          var grad = ctx.createRadialGradient(cx - 30, cy - 30, 0, cx, cy, r + 20);
+          grad.addColorStop(0, "#e8f5e9");
+          grad.addColorStop(1, "#2e7d32");
+          ctx.fillStyle = grad;
+          ctx.beginPath();
+          ctx.arc(cx, cy, r + 8, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = "#1b5e20";
+          ctx.lineWidth = 6;
+          ctx.stroke();
+          ctx.fillStyle = "#1b5e20";
+          ctx.font = "bold 14px sans-serif";
+          ctx.textAlign = "center";
+          ctx.fillText(b.name.toUpperCase(), cx, cy + 50);
+          ctx.font = "48px sans-serif";
+          ctx.fillText(b.icon, cx, cy - 20);
+          canvas.toBlob(function (blob) {
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement("a");
+            a.href = url;
+            a.download = "igniup-badge-" + (b.name.replace(/\s+/g, "-").toLowerCase()) + ".png";
+            a.click();
+            URL.revokeObjectURL(url);
+          }, "image/png");
+        }
+
+        document.getElementById("badgeModalClose").addEventListener("click", closeBadgeModal);
+        document.getElementById("badgeModal").addEventListener("click", function (e) {
+          if (e.target === this) closeBadgeModal();
+        });
+
+        function renderBadges() {
+          var list = document.getElementById("badgesList");
+          if (!list) return;
+          list.innerHTML = "";
+          BADGES.forEach(function (b) {
+            var li = document.createElement("li");
+            li.className = "badge-item" + (currentPoints >= b.points ? "" : " locked");
+            li.innerHTML =
+              "<span class=\"badge-icon\">" + b.icon + "</span>" +
+              "<div class=\"badge-info\">" +
+              "<div class=\"badge-name\">" + escapeHtml(b.name) + "</div>" +
+              "<div class=\"badge-pts\">" + b.points + " pts</div>" +
+              "</div>";
+            list.appendChild(li);
+          });
+        }
+
+        function escapeHtml(text) {
+          if (text == null) return "";
+          var div = document.createElement("div");
+          div.textContent = text;
+          return div.innerHTML;
+        }
+
+        var base = window.API_BASE || "";
+        var headers = window.getAuthHeaders ? window.getAuthHeaders() : {};
+        fetch(base + "/api/auth/me", { headers: headers })
+          .then(function (r) { return r.ok ? r.json() : {}; })
+          .then(setProfile)
+          .catch(function () { setProfile({}); });
+
+        var btnChangePw = document.getElementById("btnChangePw");
+        var form = document.getElementById("changePwForm");
+        var msgEl = document.getElementById("changePwMsg");
+        var pwModal = document.getElementById("pwModal");
+        var pwModalClose = document.getElementById("pwModalClose");
+        if (btnChangePw && pwModal) {
+          btnChangePw.addEventListener("click", function () {
+            if (msgEl) { msgEl.style.display = "none"; msgEl.textContent = ""; msgEl.className = "profile-msg"; }
+            if (form) form.reset();
+            pwModal.classList.add("show");
+          });
+        }
+        if (pwModalClose) pwModalClose.addEventListener("click", function () { pwModal.classList.remove("show"); });
+        if (pwModal) pwModal.addEventListener("click", function (e) { if (e.target === pwModal) pwModal.classList.remove("show"); });
+        if (form) {
+          form.addEventListener("submit", function (e) {
+            e.preventDefault();
+            var newPw = document.getElementById("newPassword").value;
+            var confirmPw = document.getElementById("confirmPassword").value;
+            if (newPw !== confirmPw) {
+              if (msgEl) { msgEl.textContent = "Passwords do not match."; msgEl.className = "profile-msg error"; msgEl.style.display = "block"; }
+              return;
+            }
+            var btn = form.querySelector('button[type="submit"]');
+            btn.disabled = true;
+            if (msgEl) msgEl.style.display = "none";
+            fetch((window.API_BASE || "") + "/api/auth/change-password", {
+              method: "PATCH",
+              headers: headers,
+              body: JSON.stringify({ currentPassword: document.getElementById("currentPassword").value, newPassword: newPw }),
+            })
+              .then(function (r) {
+                return r.text().then(function (text) {
+                  var ct = r.headers.get("Content-Type") || "";
+                  if (ct.indexOf("application/json") !== -1) {
+                    try { var d = JSON.parse(text); if (!r.ok) throw new Error(d.error || "Failed"); return d; } catch (err) { throw err; }
+                  }
+                  if (!r.ok) throw new Error("Failed");
+                  return {};
+                });
+              })
+              .then(function () {
+                if (msgEl) { msgEl.textContent = "Password updated."; msgEl.className = "profile-msg success"; msgEl.style.display = "block"; }
+                form.reset();
+                pwModal.classList.remove("show");
+              })
+              .catch(function (err) {
+                if (msgEl) { msgEl.textContent = err.message || "Failed to update password."; msgEl.className = "profile-msg error"; msgEl.style.display = "block"; }
+              })
+              .finally(function () { btn.disabled = false; });
+          });
+        }
+
+        var iconCopy = "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><rect x=\"9\" y=\"9\" width=\"13\" height=\"13\" rx=\"2\" ry=\"2\"/><path d=\"M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1\"/></svg>";
+        var iconDownload = "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4\"/><polyline points=\"7 10 12 15 17 10\"/><line x1=\"12\" y1=\"15\" x2=\"12\" y2=\"3\"/></svg>";
+        var iconDelete = "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><polyline points=\"3 6 5 6 21 6\"/><path d=\"M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2\"/><line x1=\"10\" y1=\"11\" x2=\"10\" y2=\"17\"/><line x1=\"14\" y1=\"11\" x2=\"14\" y2=\"17\"/></svg>";
+
+        function loadPrograms() {
+          var listEl = document.getElementById("programsList");
+          var emptyEl = document.getElementById("programsEmpty");
+          if (!listEl) return;
+          fetch(base + "/api/programs", { headers: headers })
+            .then(function (r) {
+              if (!r.ok) throw new Error("Failed");
+              return r.json();
+            })
+            .then(function (programs) {
+              listEl.innerHTML = "";
+              if (!programs || programs.length === 0) {
+                if (emptyEl) emptyEl.style.display = "block";
+                return;
+              }
+              if (emptyEl) emptyEl.style.display = "none";
+              programs.forEach(function (p) {
+                var title = (p.title || "Untitled").trim() || "Untitled";
+                var code = (p.code != null ? p.code : "") + "";
+                var codeEscaped = escapeHtml(code);
+                var card = document.createElement("li");
+                card.className = "program-card";
+                card.innerHTML =
+                  "<div class=\"program-card-toolbar\">" +
+                  "<button type=\"button\" class=\"icon-btn copy-btn\" title=\"Copy\" data-id=\"" + escapeHtml(p._id) + "\">" + iconCopy + "</button>" +
+                  "<button type=\"button\" class=\"icon-btn download-btn\" title=\"Download\" data-id=\"" + escapeHtml(p._id) + "\" data-title=\"" + escapeHtml(title).replace(/\"/g, "&quot;") + "\">" + iconDownload + "</button>" +
+                  "<button type=\"button\" class=\"icon-btn delete-btn\" title=\"Delete\" data-id=\"" + escapeHtml(p._id) + "\">" + iconDelete + "</button>" +
+                  "</div>" +
+                  "<pre class=\"program-card-code\">" + codeEscaped + "</pre>";
+                listEl.appendChild(card);
+              });
+              listEl.querySelectorAll(".copy-btn").forEach(function (btn) {
+                btn.addEventListener("click", function () {
+                  var id = btn.getAttribute("data-id");
+                  var pre = btn.closest(".program-card").querySelector(".program-card-code");
+                  var code = pre ? pre.textContent : "";
+                  navigator.clipboard.writeText(code).then(function () {
+                    var old = btn.innerHTML;
+                    btn.innerHTML = "<span style=\"font-size:11px\">✓</span>";
+                    setTimeout(function () { btn.innerHTML = iconCopy; }, 1200);
+                  }).catch(function () {});
+                });
+              });
+              listEl.querySelectorAll(".download-btn").forEach(function (btn) {
+                btn.addEventListener("click", function () {
+                  var id = btn.getAttribute("data-id");
+                  var title = (btn.getAttribute("data-title") || "program").replace(/&quot;/g, '"');
+                  var pre = btn.closest(".program-card").querySelector(".program-card-code");
+                  var code = pre ? pre.textContent : "";
+                  var filename = (title.replace(/[^a-z0-9_-]/gi, "_") || "program") + ".py";
+                  var blob = new Blob([code], { type: "text/plain" });
+                  var url = URL.createObjectURL(blob);
+                  var a = document.createElement("a");
+                  a.href = url;
+                  a.download = filename;
+                  a.click();
+                  URL.revokeObjectURL(url);
+                });
+              });
+              listEl.querySelectorAll(".delete-btn").forEach(function (btn) {
+                btn.addEventListener("click", function () {
+                  var id = btn.getAttribute("data-id");
+                  if (id) openDeleteConfirm(id);
+                });
+              });
+            })
+            .catch(function () {
+              if (emptyEl) { emptyEl.textContent = "Could not load programs."; emptyEl.style.display = "block"; }
+            });
+        }
+        loadPrograms();
+      })();
+    </script>
+  </body>
+</html>
