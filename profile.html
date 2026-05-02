@@ -76,6 +76,14 @@
       body.dark .profile-next-badge-msg .highlight { color: #66bb6a; }
       .btn-change-pw { width: 100%; padding: 10px 16px; background: #1976d2; color: #fff; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.9rem; }
       .btn-change-pw:hover { background: #1565c0; }
+      .profile-sql-ide-link {
+        display: block; margin-top: 14px; text-align: center; padding: 10px 12px;
+        font-weight: 600; font-size: 0.9rem; color: #1976d2; text-decoration: none;
+        border: 1px solid #90caf9; border-radius: 8px; background: #e3f2fd;
+      }
+      .profile-sql-ide-link:hover { background: #bbdefb; color: #0d47a1; }
+      body.dark .profile-sql-ide-link { color: #90caf9; border-color: #42a5f5; background: #1a237e22; }
+      body.dark .profile-sql-ide-link:hover { background: #1565c033; color: #e3f2fd; }
       .profile-msg { margin-top: 8px; font-size: 0.85rem; }
       .profile-msg.success { color: #2e7d32; }
       .profile-msg.error { color: #c62828; }
@@ -265,6 +273,7 @@
           </div>
           <div class="profile-next-badge-msg" id="profileNextBadgeMsg">Earn 10 points to unlock your first badge.</div>
           <button type="button" class="btn-change-pw" id="btnChangePw">Change password</button>
+          <a href="New-SQL-IDE.html" class="profile-sql-ide-link">SQL practice IDE</a>
         </aside>
 
         <section class="profile-panel profile-panel-center">
