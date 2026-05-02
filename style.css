@@ -164,7 +164,9 @@ body.dark .top-bar-logout:hover {
   flex-direction: column;
   gap: 10px;
   min-height: 0;
-  overflow: hidden;
+  align-self: stretch;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .sql-explorer-section {
@@ -227,6 +229,18 @@ body.dark .sql-explorer-head {
   background: var(--bg-editor);
 }
 
+/* Tables list: no inner max-height — expanded schema pushes Views down; scroll the explorer panel if needed. */
+body.sql-ide-page #sqlExplorerTables.sql-explorer-list {
+  max-height: none;
+  overflow-y: visible;
+}
+
+/* Views list: keep a bounded scroll area */
+body.sql-ide-page #sqlExplorerViews.sql-explorer-list {
+  max-height: 220px;
+  overflow-y: auto;
+}
+
 .sql-explorer-item {
   padding: 8px 14px;
   cursor: pointer;
@@ -240,6 +254,162 @@ body.dark .sql-explorer-head {
 
 .sql-explorer-item:last-child {
   border-bottom: none;
+}
+
+/* SQL explorer: accordion table cards (periwinkle header, +/−, column rows with blue accent) */
+.sql-explorer-tree {
+  margin: 8px 10px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(21, 101, 192, 0.22);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  background: #eef2f7;
+}
+.sql-explorer-tree-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  min-height: 40px;
+  background: #d6e6fc;
+  border-bottom: 1px solid rgba(21, 101, 192, 0.12);
+}
+.sql-explorer-tree:not(.sql-explorer-tree-open) .sql-explorer-tree-head {
+  border-bottom: none;
+}
+.sql-explorer-twisty {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+  font-size: 1.1rem;
+  font-weight: 600;
+  line-height: 1;
+  color: #0d47a1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: system-ui, "Segoe UI", sans-serif;
+}
+.sql-explorer-twisty:hover {
+  background: rgba(255, 255, 255, 0.45);
+  color: #01579b;
+}
+.sql-explorer-tree-label {
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 6px;
+  font-family: system-ui, "Segoe UI", sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #0d47a1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sql-explorer-tree-label:hover {
+  background: rgba(255, 255, 255, 0.35);
+}
+.sql-explorer-schema {
+  list-style: none;
+  margin: 0;
+  padding: 6px 6px 8px;
+  font-size: 0.82rem;
+  background: #e8ecf2;
+}
+.sql-explorer-col {
+  display: block;
+  padding: 8px 10px 8px 12px;
+  margin: 0 0 4px;
+  border-radius: 0 6px 6px 0;
+  border-left: 4px solid #1976d2;
+  background: #f3f5f8;
+  cursor: pointer;
+  color: #37474f;
+  line-height: 1.35;
+}
+.sql-explorer-col:last-child {
+  margin-bottom: 0;
+}
+.sql-explorer-col:hover {
+  background: #e8eef5;
+}
+.sql-explorer-col-empty {
+  cursor: default;
+  color: var(--text-muted);
+  font-style: italic;
+  border-left-color: rgba(25, 118, 210, 0.35);
+}
+.sql-explorer-col-empty:hover {
+  background: #f3f5f8;
+}
+.sql-explorer-col-strong {
+  font-family: system-ui, "Segoe UI", sans-serif;
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: #263238;
+}
+.sql-explorer-col-meta {
+  font-family: system-ui, "Segoe UI", sans-serif;
+  font-size: 0.78rem;
+  font-weight: 400;
+  color: #78909c;
+}
+
+body.dark .sql-explorer-tree {
+  background: #1a2332;
+  border-color: rgba(100, 181, 246, 0.25);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+body.dark .sql-explorer-tree-head {
+  background: #1e3a5f;
+  border-bottom-color: rgba(100, 181, 246, 0.2);
+}
+body.dark .sql-explorer-tree:not(.sql-explorer-tree-open) .sql-explorer-tree-head {
+  border-bottom: none;
+}
+body.dark .sql-explorer-twisty {
+  color: #bbdefb;
+}
+body.dark .sql-explorer-twisty:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #e3f2fd;
+}
+body.dark .sql-explorer-tree-label {
+  color: #bbdefb;
+}
+body.dark .sql-explorer-tree-label:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+body.dark .sql-explorer-schema {
+  background: #151d2a;
+}
+body.dark .sql-explorer-col {
+  background: #1e2736;
+  color: #eceff1;
+  border-left-color: #42a5f5;
+}
+body.dark .sql-explorer-col:hover {
+  background: #243044;
+}
+body.dark .sql-explorer-col-empty {
+  border-left-color: rgba(66, 165, 245, 0.4);
+}
+body.dark .sql-explorer-col-empty:hover {
+  background: #1e2736;
+}
+body.dark .sql-explorer-col-strong {
+  color: #eceff1;
+}
+body.dark .sql-explorer-col-meta {
+  color: #90a4ae;
 }
 
 .sql-explorer-empty {
@@ -1114,7 +1284,7 @@ body.dark .zoom-btn:hover {
     min-width: 0;
   }
 
-  body.sql-ide-page .sql-explorer-list {
+  body.sql-ide-page #sqlExplorerViews.sql-explorer-list {
     max-height: 120px;
   }
 

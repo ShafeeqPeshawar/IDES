@@ -11,27 +11,48 @@ var SQL_EMPLOYEES_COLUMNS =
 /** Quoted so SQLite keeps a capital E: Employees */
 var SQL_EMPLOYEES_TABLE_Q = '"Employees"';
 
-function sqlInsertThousandEmployeesRows() {
-  if (!sqlDb) return;
-  var ins = sqlDb.prepare(
-    "INSERT INTO " +
-      SQL_EMPLOYEES_TABLE_Q +
-      " (empno, name, salary, department, city, country) VALUES (?,?,?,?,?,?)"
-  );
-  var depts = ["HR", "IT", "Sales", "Ops", "Legal"];
-  var cities = ["NYC", "LA", "Chicago", "Houston", "Miami"];
-  var countries = ["USA", "Canada", "UK", "USA", "Mexico"];
-  for (var i = 1; i <= 1000; i++) {
-    ins.run([
-      i,
-      "Employee " + i,
-      35000 + ((i * 73) % 115000),
-      depts[i % 5],
-      cities[i % 5],
-      countries[i % countries.length],
-    ]);
+/** Static script: Employees (100 rows) + "Sales" (1000 rows) + views SalesView & SalesReport; served from /sql/employees-init.sql. */
+var SQL_EMPLOYEES_INIT_PATH = "/sql/employees-init.sql";
+
+function sqlEmployeesInitFetchUrl() {
+  return typeof window.apiUrl === "function"
+    ? window.apiUrl(SQL_EMPLOYEES_INIT_PATH)
+    : (window.API_BASE || "") + SQL_EMPLOYEES_INIT_PATH;
+}
+
+/**
+ * Load and run employees-init.sql (transaction wrapped).
+ * @param {function(boolean)} done — true if script ran without error
+ */
+function sqlApplyEmployeesInitSql(done) {
+  if (typeof done !== "function") done = function () {};
+  if (!sqlDb || !sqlJsModule) {
+    done(false);
+    return;
   }
-  ins.free();
+  fetch(sqlEmployeesInitFetchUrl())
+    .then(function (r) {
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return r.text();
+    })
+    .then(function (script) {
+      sqlDb.run("BEGIN TRANSACTION;");
+      try {
+        sqlDb.exec(script);
+        sqlDb.run("COMMIT;");
+        done(true);
+      } catch (e) {
+        try {
+          sqlDb.run("ROLLBACK;");
+        } catch (r) {}
+        console.error("employees-init.sql", e);
+        done(false);
+      }
+    })
+    .catch(function (err) {
+      console.error("Failed to load employees-init.sql", err);
+      done(false);
+    });
 }
 
 function escapeHtml(text) {
@@ -84,14 +105,16 @@ function closeSqlDb() {
   }
 }
 
-function openSqlDatabase(data) {
+function openSqlDatabase(data, onReady) {
+  if (typeof onReady !== "function") onReady = function () {};
   closeSqlDb();
   sqlDb =
     data && data.byteLength > 0
       ? new sqlJsModule.Database(data)
       : new sqlJsModule.Database();
   sqlDb.run("PRAGMA foreign_keys = ON;");
-  var seededRows = false;
+  var seededAsync = false;
+  var cnt = 0;
   try {
     /* Default practice table; SQLite stores CHAR as TEXT (length not enforced). */
     sqlDb.run(
@@ -102,7 +125,6 @@ function openSqlDatabase(data) {
         ");"
     );
     var countRes = sqlDb.exec("SELECT COUNT(*) FROM " + SQL_EMPLOYEES_TABLE_Q + ";");
-    var cnt = 0;
     if (
       countRes &&
       countRes[0] &&
@@ -112,10 +134,16 @@ function openSqlDatabase(data) {
       cnt = Number(countRes[0].values[0][0]) || 0;
     }
     if (cnt === 0) {
-      sqlDb.run("BEGIN TRANSACTION;");
-      sqlInsertThousandEmployeesRows();
-      sqlDb.run("COMMIT;");
-      seededRows = true;
+      seededAsync = true;
+      sqlApplyEmployeesInitSql(function (ok) {
+        sqlRefreshExplorer();
+        if (ok) {
+          persistLocal();
+          scheduleCloudPersist();
+        }
+        onReady(ok);
+      });
+      return;
     }
   } catch (e) {
     try {
@@ -123,10 +151,7 @@ function openSqlDatabase(data) {
     } catch (r) {}
   }
   sqlRefreshExplorer();
-  if (seededRows) {
-    persistLocal();
-    scheduleCloudPersist();
-  }
+  if (!seededAsync) onReady(true);
 }
 
 function persistLocal() {
@@ -210,6 +235,154 @@ function sqlNamesForType(type) {
   }
 }
 
+/** Double-quote SQLite identifier for PRAGMA / DDL. */
+function sqlExplorerQuoteIdent(ident) {
+  return '"' + String(ident).replace(/"/g, '""') + '"';
+}
+
+/** Column rows from PRAGMA table_info (works for tables and views). */
+function sqlExplorerTableColumns(tableName) {
+  if (!sqlDb) return [];
+  try {
+    var q = "PRAGMA table_info(" + sqlExplorerQuoteIdent(tableName) + ");";
+    var res = sqlDb.exec(q);
+    if (!res || !res[0] || !res[0].values || !res[0].columns) return [];
+    var cols = res[0].columns;
+    var idxName = cols.indexOf("name");
+    var idxType = cols.indexOf("type");
+    var idxPk = cols.indexOf("pk");
+    if (idxName < 0) return [];
+    return res[0].values.map(function (row) {
+      return {
+        name: row[idxName],
+        type: row[idxType] != null ? String(row[idxType]) : "",
+        pk: row[idxPk] ? true : false,
+      };
+    });
+  } catch (e) {
+    return [];
+  }
+}
+
+/** Short type label for explorer (mock-style: int, varchar, …). */
+function sqlExplorerDisplayType(raw, pk) {
+  var t = (raw || "").trim().toUpperCase();
+  var d;
+  if (!t) d = "varchar";
+  else if (/INT/.test(t)) d = "int";
+  else if (/CHAR|CLOB|TEXT/.test(t)) d = "varchar";
+  else if (/REAL|FLOA|DOUB/.test(t)) d = "float";
+  else if (/BLOB/.test(t)) d = "blob";
+  else if (/BOOL/.test(t)) d = "boolean";
+  else d = String(raw).trim().toLowerCase();
+  if (pk) d += ", pk";
+  return d;
+}
+
+/** Close every expanded table/view tree except `exceptLi` (accordion). */
+function sqlExplorerCollapseOtherTreeRows(exceptLi) {
+  var ids = ["sqlExplorerTables", "sqlExplorerViews"];
+  for (var i = 0; i < ids.length; i++) {
+    var ul = document.getElementById(ids[i]);
+    if (!ul) continue;
+    var opened = ul.querySelectorAll("li.sql-explorer-tree.sql-explorer-tree-open");
+    for (var j = 0; j < opened.length; j++) {
+      var other = opened[j];
+      if (other === exceptLi) continue;
+      other.classList.remove("sql-explorer-tree-open");
+      var b = other.querySelector(".sql-explorer-twisty");
+      if (b) {
+        b.setAttribute("aria-expanded", "false");
+        b.textContent = "+";
+      }
+      var sub = other.querySelector(".sql-explorer-schema");
+      if (sub) sub.hidden = true;
+    }
+  }
+}
+
+function sqlExplorerToggleTreeRow(li, btn) {
+  var wasOpen = li.classList.contains("sql-explorer-tree-open");
+  if (!wasOpen) {
+    sqlExplorerCollapseOtherTreeRows(li);
+  }
+  var open = li.classList.toggle("sql-explorer-tree-open");
+  btn.setAttribute("aria-expanded", open ? "true" : "false");
+  btn.textContent = open ? "\u2212" : "+";
+  var sub = li.querySelector(".sql-explorer-schema");
+  if (sub) sub.hidden = !open;
+}
+
+function sqlExplorerAppendTreeItem(ul, objectName) {
+  var li = document.createElement("li");
+  li.className = "sql-explorer-tree";
+
+  var head = document.createElement("div");
+  head.className = "sql-explorer-tree-head";
+
+  var twisty = document.createElement("button");
+  twisty.type = "button";
+  twisty.className = "sql-explorer-twisty";
+  twisty.setAttribute("aria-expanded", "false");
+  twisty.setAttribute("aria-label", "Show or hide columns for " + objectName);
+  twisty.textContent = "+";
+  twisty.addEventListener("keydown", function (ev) {
+    if (ev.key === " " || ev.key === "Enter") {
+      ev.preventDefault();
+      sqlExplorerToggleTreeRow(li, twisty);
+    }
+  });
+
+  var label = document.createElement("span");
+  label.className = "sql-explorer-tree-label";
+  label.textContent = objectName;
+  label.title = "Click to insert this name · Click +/− or beside the name to show or hide columns";
+
+  head.addEventListener("click", function (ev) {
+    if (label.contains(ev.target)) {
+      sqlExplorerInsertName(objectName);
+      return;
+    }
+    sqlExplorerToggleTreeRow(li, twisty);
+  });
+
+  head.appendChild(twisty);
+  head.appendChild(label);
+
+  var schemaUl = document.createElement("ul");
+  schemaUl.className = "sql-explorer-schema";
+  schemaUl.hidden = true;
+  var colDefs = sqlExplorerTableColumns(objectName);
+  if (!colDefs.length) {
+    var emptyLi = document.createElement("li");
+    emptyLi.className = "sql-explorer-col sql-explorer-col-empty";
+    emptyLi.textContent = "(no columns)";
+    schemaUl.appendChild(emptyLi);
+  } else {
+    colDefs.forEach(function (col) {
+      var cli = document.createElement("li");
+      cli.className = "sql-explorer-col";
+      var strong = document.createElement("span");
+      strong.className = "sql-explorer-col-strong";
+      strong.textContent = col.name;
+      var meta = document.createElement("span");
+      meta.className = "sql-explorer-col-meta";
+      meta.textContent = " (" + sqlExplorerDisplayType(col.type, col.pk) + ")";
+      cli.appendChild(strong);
+      cli.appendChild(meta);
+      cli.title = "Insert column name at cursor";
+      cli.addEventListener("click", function () {
+        sqlExplorerInsertName(col.name);
+      });
+      schemaUl.appendChild(cli);
+    });
+  }
+
+  li.appendChild(head);
+  li.appendChild(schemaUl);
+  ul.appendChild(li);
+}
+
 function sqlRefreshExplorer() {
   var ulT = document.getElementById("sqlExplorerTables");
   var ulV = document.getElementById("sqlExplorerViews");
@@ -221,24 +394,17 @@ function sqlRefreshExplorer() {
     ulV.innerHTML = '<li class="sql-explorer-empty">(none)</li>';
     return;
   }
-  function fillList(ul, names) {
+  function fillTreeList(ul, names) {
     if (!names.length) {
       ul.innerHTML = '<li class="sql-explorer-empty">(none)</li>';
       return;
     }
     names.forEach(function (name) {
-      var li = document.createElement("li");
-      li.className = "sql-explorer-item";
-      li.textContent = name;
-      li.title = "Insert name at cursor";
-      li.onclick = function () {
-        sqlExplorerInsertName(name);
-      };
-      ul.appendChild(li);
+      sqlExplorerAppendTreeItem(ul, name);
     });
   }
-  fillList(ulT, sqlNamesForType("table"));
-  fillList(ulV, sqlNamesForType("view"));
+  fillTreeList(ulT, sqlNamesForType("table"));
+  fillTreeList(ulV, sqlNamesForType("view"));
 }
 
 function renderExecResults(container, results) {
@@ -391,34 +557,39 @@ function sqlClearEditor() {
 function sqlResetDatabase() {
   if (
     !confirm(
-      "Re-create the Employees table with 1,000 sample rows? Other tables and views you added will be kept."
+      "Run employees-init.sql: recreate Employees (100 rows), \"Sales\" (1000 rows), and views SalesView & SalesReport. Other tables you added will be kept."
     )
   )
     return;
+  var out = document.getElementById("sqlResults");
   if (!sqlDb || !sqlJsModule) {
-    openSqlDatabase(null);
-  } else {
-    try {
-      sqlDb.run("BEGIN TRANSACTION;");
-      sqlDb.run("DROP TABLE IF EXISTS employees;");
-      sqlDb.run("DROP TABLE IF EXISTS " + SQL_EMPLOYEES_TABLE_Q + ";");
-      sqlDb.run(
-        "CREATE TABLE " + SQL_EMPLOYEES_TABLE_Q + " (" + SQL_EMPLOYEES_COLUMNS + ");"
-      );
-      sqlInsertThousandEmployeesRows();
-      sqlDb.run("COMMIT;");
-    } catch (e) {
-      try {
-        sqlDb.run("ROLLBACK;");
-      } catch (r) {}
-    }
-    sqlRefreshExplorer();
+    openSqlDatabase(null, function () {
+      document.getElementById("editor").value = "";
+      sqlUpdateLineNumbers();
+      sqlShowResultsEmpty();
+      persistLocal();
+      scheduleCloudPersist();
+    });
+    return;
   }
-  document.getElementById("editor").value = "";
-  sqlUpdateLineNumbers();
-  sqlShowResultsEmpty();
-  persistLocal();
-  scheduleCloudPersist();
+  if (out) out.innerHTML = '<span class="loading">Initializing…</span>';
+  sqlApplyEmployeesInitSql(function (ok) {
+    sqlRefreshExplorer();
+    if (out) {
+      if (ok) {
+        out.innerHTML =
+          '<div class="sql-results-msg success">Initialized: Employees (100 rows), Sales (1,000 rows), and views SalesView & SalesReport from employees-init.sql.</div>';
+        setTimeout(sqlShowResultsEmpty, 2800);
+      } else {
+        out.innerHTML =
+          '<span class="error">Initialize failed. Ensure the app is served from the server (e.g. http://localhost:3000) so <code>sql/employees-init.sql</code> can load.</span>';
+      }
+    }
+    document.getElementById("editor").value = "";
+    sqlUpdateLineNumbers();
+    persistLocal();
+    scheduleCloudPersist();
+  });
 }
 
 function sqlGoHome() {
@@ -599,18 +770,21 @@ function fetchCloudWorkspace() {
   });
 }
 
-function applyWorkspacePayload(payload) {
-  if (payload && payload.sqliteBase64) {
-    var bytes = base64ToUint8Array(payload.sqliteBase64);
-    openSqlDatabase(bytes);
-    if (payload.editorScript != null)
+function applyWorkspacePayload(payload, onReady) {
+  if (typeof onReady !== "function") onReady = function () {};
+  function finishEditor() {
+    if (payload && payload.editorScript != null)
       document.getElementById("editor").value = payload.editorScript;
     else document.getElementById("editor").value = "";
-  } else {
-    openSqlDatabase(null);
-    document.getElementById("editor").value = "";
+    sqlUpdateLineNumbers();
+    onReady();
   }
-  sqlUpdateLineNumbers();
+  if (payload && payload.sqliteBase64) {
+    var bytes = base64ToUint8Array(payload.sqliteBase64);
+    openSqlDatabase(bytes, finishEditor);
+  } else {
+    openSqlDatabase(null, finishEditor);
+  }
 }
 
 function initSqlIdeAfterEngine() {
@@ -626,28 +800,28 @@ function initSqlIdeAfterEngine() {
     fetchCloudWorkspace()
       .then(function (res) {
         if (res.workspace) {
-          applyWorkspacePayload(res.workspace);
+          applyWorkspacePayload(res.workspace, finishInit);
         } else {
           var local = loadLocalWorkspace();
-          if (local && local.sqliteBase64) applyWorkspacePayload(local);
-          else applyWorkspacePayload(null);
+          if (local && local.sqliteBase64) applyWorkspacePayload(local, finishInit);
+          else applyWorkspacePayload(null, finishInit);
         }
-        finishInit();
       })
       .catch(function () {
         var local = loadLocalWorkspace();
-        if (local && local.sqliteBase64) applyWorkspacePayload(local);
-        else applyWorkspacePayload(null);
-        if (out)
-          out.innerHTML =
-            '<span class="error">Could not load cloud workspace (showing local or new DB).</span>';
-        setTimeout(initSqlSplitResizer, 0);
+        function afterPayload() {
+          finishInit();
+          if (out)
+            out.innerHTML =
+              '<span class="error">Could not load cloud workspace (showing local or new DB).</span>';
+        }
+        if (local && local.sqliteBase64) applyWorkspacePayload(local, afterPayload);
+        else applyWorkspacePayload(null, afterPayload);
       });
   } else {
     var local = loadLocalWorkspace();
-    if (local && local.sqliteBase64) applyWorkspacePayload(local);
-    else applyWorkspacePayload(null);
-    finishInit();
+    if (local && local.sqliteBase64) applyWorkspacePayload(local, finishInit);
+    else applyWorkspacePayload(null, finishInit);
   }
 }
 
