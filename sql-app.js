@@ -11,7 +11,7 @@ var SQL_EMPLOYEES_COLUMNS =
 /** Quoted so SQLite keeps a capital E: Employees */
 var SQL_EMPLOYEES_TABLE_Q = '"Employees"';
 
-/** Static script: Employees (100 rows) + "Sales" (1000 rows) + views SalesView & SalesReport; served from /sql/employees-init.sql. */
+/** Static script: Employees (100 rows) + "Sales" (1000 rows) + views SalesView, SalesReport & SalariesView; served from /sql/employees-init.sql. */
 var SQL_EMPLOYEES_INIT_PATH = "/sql/employees-init.sql";
 
 function sqlEmployeesInitFetchUrl() {
@@ -557,7 +557,7 @@ function sqlClearEditor() {
 function sqlResetDatabase() {
   if (
     !confirm(
-      "Run employees-init.sql: recreate Employees (100 rows), \"Sales\" (1000 rows), and views SalesView & SalesReport. Other tables you added will be kept."
+      "Run employees-init.sql: recreate Employees (100 rows), \"Sales\" (1000 rows), and views SalesView, SalesReport & SalariesView. Other tables you added will be kept."
     )
   )
     return;
@@ -578,7 +578,7 @@ function sqlResetDatabase() {
     if (out) {
       if (ok) {
         out.innerHTML =
-          '<div class="sql-results-msg success">Initialized: Employees (100 rows), Sales (1,000 rows), and views SalesView & SalesReport from employees-init.sql.</div>';
+          '<div class="sql-results-msg success">Initialized: Employees (100 rows), Sales (1,000 rows), and views SalesView, SalesReport & SalariesView from employees-init.sql.</div>';
         setTimeout(sqlShowResultsEmpty, 2800);
       } else {
         out.innerHTML =

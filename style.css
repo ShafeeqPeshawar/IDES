@@ -229,16 +229,11 @@ body.dark .sql-explorer-head {
   background: var(--bg-editor);
 }
 
-/* Tables list: no inner max-height — expanded schema pushes Views down; scroll the explorer panel if needed. */
-body.sql-ide-page #sqlExplorerTables.sql-explorer-list {
+/* Tables & Views lists: grow with expanded schema; push content below / scroll the explorer panel if needed. */
+body.sql-ide-page #sqlExplorerTables.sql-explorer-list,
+body.sql-ide-page #sqlExplorerViews.sql-explorer-list {
   max-height: none;
   overflow-y: visible;
-}
-
-/* Views list: keep a bounded scroll area */
-body.sql-ide-page #sqlExplorerViews.sql-explorer-list {
-  max-height: 220px;
-  overflow-y: auto;
 }
 
 .sql-explorer-item {
@@ -1282,10 +1277,6 @@ body.dark .zoom-btn:hover {
   body.sql-ide-page .sql-explorer-section {
     flex: 1;
     min-width: 0;
-  }
-
-  body.sql-ide-page #sqlExplorerViews.sql-explorer-list {
-    max-height: 120px;
   }
 
   body.sql-ide-page .sql-ide-stack {

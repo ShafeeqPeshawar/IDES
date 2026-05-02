@@ -1,6 +1,7 @@
--- igniUp SQL practice: Employees (100 rows) + "Sales" (1000 rows, GB/IE cities) + views SalesView, SalesReport.
+-- igniUp SQL practice: Employees (100 rows) + "Sales" (1000 rows, GB/IE cities) + views SalesView, SalesReport, SalariesView.
 -- Executed when the user clicks Initialize (and when the table is empty on first load).
 
+DROP VIEW IF EXISTS "SalariesView";
 DROP VIEW IF EXISTS "SalesReport";
 DROP VIEW IF EXISTS "SalesView";
 
@@ -1136,3 +1137,8 @@ CREATE VIEW SalesReport AS
 SELECT product, Quantity, Price, Quantity * price AS Sales, (quantity * price) * 7 / 100 AS VAT, city, country
 FROM "Sales"
 ORDER BY country, city;
+
+CREATE VIEW SalariesView AS
+SELECT name, salary, salary * 11 / 100 AS Tax, salary - (salary * 11 / 100) AS "Net Salary", city, country
+FROM "Employees"
+ORDER BY city, country;
