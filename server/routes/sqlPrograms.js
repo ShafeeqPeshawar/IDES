@@ -1,7 +1,7 @@
 const express = require("express");
 const crypto = require("crypto");
-const Program = require("../models/Program");
 const SqlProgram = require("../models/SqlProgram");
+const Program = require("../models/Program");
 const { authMiddleware } = require("../middleware/auth");
 const { BADGES } = require("../config/badges");
 const { sendAchievementEmail } = require("../utils/email");
@@ -11,11 +11,6 @@ const POINTS_PER_SUCCESS = 10;
 
 router.use(authMiddleware);
 
-/**
- * Normalize code for hashing only: lowercase, collapse whitespace, remove spaces
- * around = + - * / ( ) , : so that "a = 20", "a=20", "A=20" all match.
- * The actual code (original case and spacing) is stored separately.
- */
 function normalizeCodeForHash(code) {
   if (code == null || typeof code !== "string") return "";
   let s = code.trim().toLowerCase();
@@ -39,25 +34,12 @@ function computeCodeHash(code) {
 
 router.get("/", async (req, res) => {
   try {
-    const list = await Program.find({ userId: req.user._id })
+    const list = await SqlProgram.find({ userId: req.user._id })
       .sort({ updatedAt: -1 })
       .select("_id title code codeHash executedSuccessfully lastExecutedAt createdAt updatedAt");
     res.json(list);
   } catch (err) {
-    res.status(500).json({ error: err.message || "Failed to list programs" });
-  }
-});
-
-router.get("/:id", async (req, res) => {
-  try {
-    const program = await Program.findOne({
-      _id: req.params.id,
-      userId: req.user._id,
-    });
-    if (!program) return res.status(404).json({ error: "Program not found" });
-    res.json(program);
-  } catch (err) {
-    res.status(500).json({ error: err.message || "Failed to get program" });
+    res.status(500).json({ error: err.message || "Failed to list SQL programs" });
   }
 });
 
@@ -67,17 +49,16 @@ router.post("/", async (req, res) => {
     const codeStr = code != null ? String(code) : "";
     const codeHash = computeCodeHash(codeStr);
 
-    const existing = await Program.findOne({
+    const existing = await SqlProgram.findOne({
       userId: req.user._id,
       codeHash: codeHash,
     });
 
     if (existing) {
-      // Same logical code (same hash): do not save again, do not give score.
       return res.json(existing);
     }
 
-    const program = await Program.create({
+    const program = await SqlProgram.create({
       userId: req.user._id,
       title: title || "Untitled",
       code: codeStr,
@@ -86,13 +67,12 @@ router.post("/", async (req, res) => {
       lastExecutedAt: executedSuccessfully === true ? new Date() : undefined,
     });
 
-    // If this save earned points, check for newly unlocked badge and send achievement email
     if (executedSuccessfully === true) {
-      const successPy = await Program.countDocuments({
+      const successSql = await SqlProgram.countDocuments({
         userId: req.user._id,
         executedSuccessfully: true,
       });
-      const successSql = await SqlProgram.countDocuments({
+      const successPy = await Program.countDocuments({
         userId: req.user._id,
         executedSuccessfully: true,
       });
@@ -113,17 +93,30 @@ router.post("/", async (req, res) => {
 
     res.status(201).json(program);
   } catch (err) {
-    res.status(500).json({ error: err.message || "Failed to create program" });
+    res.status(500).json({ error: err.message || "Failed to create SQL program" });
+  }
+});
+
+router.get("/:id", async (req, res) => {
+  try {
+    const program = await SqlProgram.findOne({
+      _id: req.params.id,
+      userId: req.user._id,
+    });
+    if (!program) return res.status(404).json({ error: "SQL program not found" });
+    res.json(program);
+  } catch (err) {
+    res.status(500).json({ error: err.message || "Failed to get SQL program" });
   }
 });
 
 router.patch("/:id", async (req, res) => {
   try {
-    const program = await Program.findOne({
+    const program = await SqlProgram.findOne({
       _id: req.params.id,
       userId: req.user._id,
     });
-    if (!program) return res.status(404).json({ error: "Program not found" });
+    if (!program) return res.status(404).json({ error: "SQL program not found" });
     const wasAlreadySuccess = program.executedSuccessfully === true;
     if (req.body.title != null) program.title = req.body.title;
     if (req.body.code != null) program.code = req.body.code;
@@ -133,7 +126,6 @@ router.patch("/:id", async (req, res) => {
     }
     await program.save();
 
-    // If we just marked this program as successful for the first time, check for new badge
     if (req.body.executedSuccessfully === true && !wasAlreadySuccess) {
       const successPy = await Program.countDocuments({
         userId: req.user._id,
@@ -160,20 +152,20 @@ router.patch("/:id", async (req, res) => {
 
     res.json(program);
   } catch (err) {
-    res.status(500).json({ error: err.message || "Failed to update program" });
+    res.status(500).json({ error: err.message || "Failed to update SQL program" });
   }
 });
 
 router.delete("/:id", async (req, res) => {
   try {
-    const result = await Program.findOneAndDelete({
+    const result = await SqlProgram.findOneAndDelete({
       _id: req.params.id,
       userId: req.user._id,
     });
-    if (!result) return res.status(404).json({ error: "Program not found" });
+    if (!result) return res.status(404).json({ error: "SQL program not found" });
     res.status(204).send();
   } catch (err) {
-    res.status(500).json({ error: err.message || "Failed to delete program" });
+    res.status(500).json({ error: err.message || "Failed to delete SQL program" });
   }
 });
 

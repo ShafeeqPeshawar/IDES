@@ -76,14 +76,6 @@
       body.dark .profile-next-badge-msg .highlight { color: #66bb6a; }
       .btn-change-pw { width: 100%; padding: 10px 16px; background: #1976d2; color: #fff; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.9rem; }
       .btn-change-pw:hover { background: #1565c0; }
-      .profile-sql-ide-link {
-        display: block; margin-top: 14px; text-align: center; padding: 10px 12px;
-        font-weight: 600; font-size: 0.9rem; color: #1976d2; text-decoration: none;
-        border: 1px solid #90caf9; border-radius: 8px; background: #e3f2fd;
-      }
-      .profile-sql-ide-link:hover { background: #bbdefb; color: #0d47a1; }
-      body.dark .profile-sql-ide-link { color: #90caf9; border-color: #42a5f5; background: #1a237e22; }
-      body.dark .profile-sql-ide-link:hover { background: #1565c033; color: #e3f2fd; }
       .profile-msg { margin-top: 8px; font-size: 0.85rem; }
       .profile-msg.success { color: #2e7d32; }
       .profile-msg.error { color: #c62828; }
@@ -114,6 +106,75 @@
       body.dark .program-card-code { background: #1e1e1e; color: #d4d4d4; border-color: #444; }
       .programs-empty { color: #6b7280; font-size: 0.9rem; padding: 24px 0; }
       body.dark .programs-empty { color: #aaa; }
+      .programs-tabs {
+        display: flex; gap: 4px; margin: 0 0 20px; padding: 5px; border-radius: 14px;
+        background: linear-gradient(160deg, #eef1f6 0%, #e2e6ef 45%, #dce1eb 100%);
+        border: 1px solid #c5ccd8;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75), 0 1px 2px rgba(15, 23, 42, 0.06);
+      }
+      body.dark .programs-tabs {
+        background: linear-gradient(160deg, #343434 0%, #2a2a2a 50%, #242424 100%);
+        border-color: #454545;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 2px 8px rgba(0, 0, 0, 0.25);
+      }
+      .programs-tab {
+        flex: 1; position: relative; display: flex; align-items: center; justify-content: center;
+        padding: 12px 16px 14px; border: none; border-radius: 11px; cursor: pointer;
+        font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        font-size: 0.8125rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+        color: #64748b; background: transparent;
+        transition: color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+      }
+      body.dark .programs-tab { color: #94a3b8; }
+      .programs-tab:hover:not(.programs-tab-active) {
+        color: #334155; background: rgba(255, 255, 255, 0.45);
+      }
+      body.dark .programs-tab:hover:not(.programs-tab-active) {
+        color: #cbd5e1; background: rgba(255, 255, 255, 0.06);
+      }
+      .programs-tab:focus-visible {
+        outline: none; box-shadow: 0 0 0 2px #fff, 0 0 0 4px #1976d2;
+      }
+      body.dark .programs-tab:focus-visible {
+        box-shadow: 0 0 0 2px #2d2d2d, 0 0 0 4px #64b5f6;
+      }
+      .programs-tab-label {
+        display: inline-block; position: relative; line-height: 1.25;
+      }
+      .programs-tab-python .programs-tab-label::after {
+        content: ""; display: block; margin: 6px auto 0; width: 0; height: 2px; border-radius: 2px;
+        background: linear-gradient(90deg, #f9a825, #fbc02d); opacity: 0;
+        transition: width 0.25s ease, opacity 0.2s ease;
+      }
+      .programs-tab-sql .programs-tab-label::after {
+        content: ""; display: block; margin: 6px auto 0; width: 0; height: 2px; border-radius: 2px;
+        background: linear-gradient(90deg, #00897b, #26a69a); opacity: 0;
+        transition: width 0.25s ease, opacity 0.2s ease;
+      }
+      .programs-tab-active.programs-tab-python .programs-tab-label::after,
+      .programs-tab-active.programs-tab-sql .programs-tab-label::after {
+        width: 2.25rem; opacity: 1;
+      }
+      .programs-tab-active {
+        color: #0d47a1;
+        background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+        box-shadow: 0 3px 12px rgba(25, 118, 210, 0.15), 0 1px 0 rgba(255, 255, 255, 1) inset;
+        transform: translateY(-0.5px);
+      }
+      body.dark .programs-tab-active {
+        color: #90caf9;
+        background: linear-gradient(180deg, #383838 0%, #2e2e2e 100%);
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      }
+      .programs-tab-active .programs-tab-label {
+        letter-spacing: 0.16em;
+        text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6);
+      }
+      body.dark .programs-tab-active .programs-tab-label {
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+      }
+      .programs-tab-panel[hidden] { display: none !important; }
+      .programs-tab-panel:not([hidden]) { display: block; }
       .badges-list { list-style: none; margin: 0; padding: 0; }
       .badge-item {
         display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #e5e7eb;
@@ -273,18 +334,27 @@
           </div>
           <div class="profile-next-badge-msg" id="profileNextBadgeMsg">Earn 10 points to unlock your first badge.</div>
           <button type="button" class="btn-change-pw" id="btnChangePw">Change password</button>
-          <a href="New-SQL-IDE.html" class="profile-sql-ide-link">SQL practice IDE</a>
         </aside>
 
         <section class="profile-panel profile-panel-center">
           <div class="badge-strip-wrap">
             <h3 class="badge-strip-title">Your Achievements</h3>
-            <p class="badge-strip-empty" id="badgeStripEmpty" style="display:none">Run code successfully to earn badges.</p>
+            <p class="badge-strip-empty" id="badgeStripEmpty" style="display:none">Run Python or SQL successfully to earn badges.</p>
             <div class="badge-strip" id="badgeStrip"></div>
           </div>
-          <h2 class="panel-title">Saved programs</h2>
-          <p class="programs-empty" id="programsEmpty" style="display:none">No programs yet. Run code in the Python IDE and it will be saved here. Each successful run earns 10 points.</p>
-          <ul class="programs-list" id="programsList"></ul>
+          <h2 class="panel-title">Saved code</h2>
+          <div class="programs-tabs" role="tablist" aria-label="Saved code by language">
+            <button type="button" class="programs-tab programs-tab-python programs-tab-active" role="tab" id="programsTabPython" aria-selected="true" aria-controls="programsPanelPython" tabindex="0"><span class="programs-tab-label">Python</span></button>
+            <button type="button" class="programs-tab programs-tab-sql" role="tab" id="programsTabSql" aria-selected="false" aria-controls="programsPanelSql" tabindex="-1"><span class="programs-tab-label">SQL</span></button>
+          </div>
+          <div id="programsPanelPython" class="programs-tab-panel" role="tabpanel" aria-labelledby="programsTabPython">
+            <p class="programs-empty" id="programsEmpty" style="display:none">No Python programs yet. Run code successfully in the Python IDE while logged in. Each unique successful run earns 10 points.</p>
+            <ul class="programs-list" id="programsList"></ul>
+          </div>
+          <div id="programsPanelSql" class="programs-tab-panel" role="tabpanel" aria-labelledby="programsTabSql" hidden>
+            <p class="programs-empty" id="sqlProgramsEmpty" style="display:none">No saved SQL yet. Execute a query successfully in the SQL practice IDE while logged in.</p>
+            <ul class="programs-list" id="sqlProgramsList"></ul>
+          </div>
         </section>
 
         <aside class="profile-panel">
@@ -376,6 +446,10 @@
           return;
         }
 
+        function api(p) {
+          return typeof window.apiUrl === "function" ? window.apiUrl(p) : (window.API_BASE || "") + p;
+        }
+
         var body = document.body;
         var themeBtn = document.getElementById("themeBtn");
         var themeIcon = document.getElementById("themeIcon");
@@ -404,15 +478,18 @@
         });
 
         var pendingDeleteId = null;
+        var pendingDeleteKind = "program";
         var deleteOverlay = document.getElementById("deleteConfirmOverlay");
         var deleteCancelBtn = document.getElementById("deleteConfirmCancel");
         var deleteConfirmBtn = document.getElementById("deleteConfirmConfirm");
         function closeDeleteConfirm() {
           pendingDeleteId = null;
+          pendingDeleteKind = "program";
           if (deleteOverlay) deleteOverlay.classList.remove("show");
         }
-        function openDeleteConfirm(id) {
+        function openDeleteConfirm(id, kind) {
           pendingDeleteId = id;
+          pendingDeleteKind = kind === "sql" ? "sql" : "program";
           if (deleteOverlay) deleteOverlay.classList.add("show");
         }
         if (deleteCancelBtn) deleteCancelBtn.addEventListener("click", closeDeleteConfirm);
@@ -422,14 +499,18 @@
             if (!pendingDeleteId) return;
             var id = pendingDeleteId;
             closeDeleteConfirm();
-            var base = window.API_BASE || "";
             var headers = {};
             if (typeof window.getAuthHeaders === "function") { var h = window.getAuthHeaders(); if (h && h.Authorization) headers.Authorization = h.Authorization; }
-            fetch(base + "/api/programs/" + id, { method: "DELETE", headers: headers })
+            var delUrl =
+              pendingDeleteKind === "sql"
+                ? api("/api/sql-programs/" + id)
+                : api("/api/programs/" + id);
+            fetch(delUrl, { method: "DELETE", headers: headers })
               .then(function (r) {
                 if (!r.ok) throw new Error("Delete failed");
                 loadPrograms();
-                return fetch(base + "/api/auth/me", { headers: headers }).then(function (r2) { return r2.ok ? r2.json() : {}; });
+                loadSqlPrograms();
+                return fetch(api("/api/auth/me"), { headers: headers }).then(function (r2) { return r2.ok ? r2.json() : {}; });
               })
               .then(function (data) {
                 if (data && typeof data.points !== "undefined") { setProfile(data); }
@@ -641,9 +722,8 @@
           return div.innerHTML;
         }
 
-        var base = window.API_BASE || "";
         var headers = window.getAuthHeaders ? window.getAuthHeaders() : {};
-        fetch(base + "/api/auth/me", { headers: headers })
+        fetch(api("/api/auth/me"), { headers: headers })
           .then(function (r) { return r.ok ? r.json() : {}; })
           .then(setProfile)
           .catch(function () { setProfile({}); });
@@ -674,7 +754,7 @@
             var btn = form.querySelector('button[type="submit"]');
             btn.disabled = true;
             if (msgEl) msgEl.style.display = "none";
-            fetch((window.API_BASE || "") + "/api/auth/change-password", {
+            fetch(api("/api/auth/change-password"), {
               method: "PATCH",
               headers: headers,
               body: JSON.stringify({ currentPassword: document.getElementById("currentPassword").value, newPassword: newPw }),
@@ -709,7 +789,7 @@
           var listEl = document.getElementById("programsList");
           var emptyEl = document.getElementById("programsEmpty");
           if (!listEl) return;
-          fetch(base + "/api/programs", { headers: headers })
+          fetch(api("/api/programs"), { headers: headers })
             .then(function (r) {
               if (!r.ok) throw new Error("Failed");
               return r.json();
@@ -767,7 +847,7 @@
               listEl.querySelectorAll(".delete-btn").forEach(function (btn) {
                 btn.addEventListener("click", function () {
                   var id = btn.getAttribute("data-id");
-                  if (id) openDeleteConfirm(id);
+                  if (id) openDeleteConfirm(id, "program");
                 });
               });
             })
@@ -775,7 +855,112 @@
               if (emptyEl) { emptyEl.textContent = "Could not load programs."; emptyEl.style.display = "block"; }
             });
         }
+
+        function loadSqlPrograms() {
+          var listEl = document.getElementById("sqlProgramsList");
+          var emptyEl = document.getElementById("sqlProgramsEmpty");
+          if (!listEl) return;
+          fetch(api("/api/sql-programs"), { headers: headers })
+            .then(function (r) {
+              if (!r.ok) throw new Error("Failed");
+              return r.json();
+            })
+            .then(function (programs) {
+              listEl.innerHTML = "";
+              if (!programs || programs.length === 0) {
+                if (emptyEl) emptyEl.style.display = "block";
+                return;
+              }
+              if (emptyEl) emptyEl.style.display = "none";
+              programs.forEach(function (p) {
+                var title = (p.title || "Untitled").trim() || "Untitled";
+                var code = (p.code != null ? p.code : "") + "";
+                var codeEscaped = escapeHtml(code);
+                var card = document.createElement("li");
+                card.className = "program-card";
+                card.innerHTML =
+                  "<div class=\"program-card-toolbar\">" +
+                  "<button type=\"button\" class=\"icon-btn copy-btn\" title=\"Copy\" data-id=\"" + escapeHtml(p._id) + "\">" + iconCopy + "</button>" +
+                  "<button type=\"button\" class=\"icon-btn download-btn\" title=\"Download\" data-id=\"" + escapeHtml(p._id) + "\" data-title=\"" + escapeHtml(title).replace(/\"/g, "&quot;") + "\">" + iconDownload + "</button>" +
+                  "<button type=\"button\" class=\"icon-btn delete-btn\" title=\"Delete\" data-id=\"" + escapeHtml(p._id) + "\">" + iconDelete + "</button>" +
+                  "</div>" +
+                  "<pre class=\"program-card-code\">" + codeEscaped + "</pre>";
+                listEl.appendChild(card);
+              });
+              listEl.querySelectorAll(".copy-btn").forEach(function (btn) {
+                btn.addEventListener("click", function () {
+                  var pre = btn.closest(".program-card").querySelector(".program-card-code");
+                  var code = pre ? pre.textContent : "";
+                  navigator.clipboard.writeText(code).then(function () {
+                    btn.innerHTML = "<span style=\"font-size:11px\">✓</span>";
+                    setTimeout(function () { btn.innerHTML = iconCopy; }, 1200);
+                  }).catch(function () {});
+                });
+              });
+              listEl.querySelectorAll(".download-btn").forEach(function (btn) {
+                btn.addEventListener("click", function () {
+                  var title = (btn.getAttribute("data-title") || "query").replace(/&quot;/g, '"');
+                  var pre = btn.closest(".program-card").querySelector(".program-card-code");
+                  var code = pre ? pre.textContent : "";
+                  var filename = (title.replace(/[^a-z0-9_-]/gi, "_") || "query") + ".sql";
+                  var blob = new Blob([code], { type: "text/plain" });
+                  var url = URL.createObjectURL(blob);
+                  var a = document.createElement("a");
+                  a.href = url;
+                  a.download = filename;
+                  a.click();
+                  URL.revokeObjectURL(url);
+                });
+              });
+              listEl.querySelectorAll(".delete-btn").forEach(function (btn) {
+                btn.addEventListener("click", function () {
+                  var id = btn.getAttribute("data-id");
+                  if (id) openDeleteConfirm(id, "sql");
+                });
+              });
+            })
+            .catch(function () {
+              if (emptyEl) { emptyEl.textContent = "Could not load SQL programs."; emptyEl.style.display = "block"; }
+            });
+        }
+        function initProgramsTabs() {
+          var tabPy = document.getElementById("programsTabPython");
+          var tabSql = document.getElementById("programsTabSql");
+          var panelPy = document.getElementById("programsPanelPython");
+          var panelSql = document.getElementById("programsPanelSql");
+          if (!tabPy || !tabSql || !panelPy || !panelSql) return;
+          function activate(which) {
+            var isPy = which === "python";
+            tabPy.classList.toggle("programs-tab-active", isPy);
+            tabSql.classList.toggle("programs-tab-active", !isPy);
+            tabPy.setAttribute("aria-selected", isPy ? "true" : "false");
+            tabSql.setAttribute("aria-selected", !isPy ? "true" : "false");
+            tabPy.tabIndex = isPy ? 0 : -1;
+            tabSql.tabIndex = isPy ? -1 : 0;
+            panelPy.hidden = !isPy;
+            panelSql.hidden = isPy;
+          }
+          tabPy.addEventListener("click", function () { activate("python"); });
+          tabSql.addEventListener("click", function () { activate("sql"); });
+          tabPy.addEventListener("keydown", function (e) {
+            if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+              e.preventDefault();
+              tabSql.focus();
+              activate("sql");
+            }
+          });
+          tabSql.addEventListener("keydown", function (e) {
+            if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+              e.preventDefault();
+              tabPy.focus();
+              activate("python");
+            }
+          });
+        }
+
         loadPrograms();
+        loadSqlPrograms();
+        initProgramsTabs();
       })();
     </script>
   </body>

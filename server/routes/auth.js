@@ -2,6 +2,7 @@ const express = require("express");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const Program = require("../models/Program");
+const SqlProgram = require("../models/SqlProgram");
 const { authMiddleware } = require("../middleware/auth");
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || "igniup-dev-secret-change-me";
@@ -10,17 +11,25 @@ const POINTS_PER_SUCCESS = 10;
 router.get("/me", authMiddleware, async (req, res) => {
   try {
     const totalPrograms = await Program.countDocuments({ userId: req.user._id });
+    const totalSqlPrograms = await SqlProgram.countDocuments({ userId: req.user._id });
     const successPrograms = await Program.countDocuments({
       userId: req.user._id,
       executedSuccessfully: true,
     });
-    const points = successPrograms * POINTS_PER_SUCCESS;
+    const successSqlPrograms = await SqlProgram.countDocuments({
+      userId: req.user._id,
+      executedSuccessfully: true,
+    });
+    const successTotal = successPrograms + successSqlPrograms;
+    const points = successTotal * POINTS_PER_SUCCESS;
     res.json({
       name: req.user.name,
       email: req.user.email,
       points,
       totalPrograms,
+      totalSqlPrograms,
       successPrograms,
+      successSqlPrograms,
       successRate: totalPrograms > 0 ? Math.round((successPrograms / totalPrograms) * 100) : 0,
     });
   } catch (err) {

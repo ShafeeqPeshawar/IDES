@@ -279,6 +279,63 @@ function renderExecResults(container, results) {
   }
 }
 
+function sqlAutoSaveSuccessfulScript(sqlText) {
+  if (typeof window.isLoggedIn !== "function" || !window.isLoggedIn()) return;
+  var t = (sqlText != null ? String(sqlText) : "").trim();
+  if (!t) return;
+  var headers = window.getAuthHeaders ? window.getAuthHeaders() : {};
+  if (!headers.Authorization) return;
+  var firstLine = t.split(/\r?\n/)[0].trim();
+  var title = firstLine.length > 80 ? firstLine.slice(0, 77) + "..." : firstLine;
+  if (!title) title = "Untitled";
+  var saveUrl = typeof window.apiUrl === "function" ? window.apiUrl("/api/sql-programs") : (window.API_BASE || "") + "/api/sql-programs";
+  fetch(saveUrl, {
+    method: "POST",
+    headers: headers,
+    body: JSON.stringify({ title: title, code: t, executedSuccessfully: true }),
+  })
+    .then(function (r) {
+      return r.text().then(function (text) {
+        var j = {};
+        if (text) {
+          try {
+            j = JSON.parse(text);
+          } catch (e) {}
+        }
+        if (!r.ok) {
+          var msg = j.error || "Could not save SQL to your profile (" + r.status + ").";
+          if (r.status === 404) {
+            msg +=
+              " If the URL looks like …//api/…, reload the page. Otherwise restart the server (npm start in server/) so /api/sql-programs is registered.";
+          }
+          var resultsEl = document.getElementById("sqlResults");
+          if (resultsEl && r.status === 401) {
+            resultsEl.insertAdjacentHTML(
+              "beforeend",
+              '<div class="sql-results-msg error" style="margin-top:8px">Profile save: log in again (session expired).</div>'
+            );
+          } else if (resultsEl) {
+            resultsEl.insertAdjacentHTML(
+              "beforeend",
+              '<div class="sql-results-msg error" style="margin-top:8px">' +
+                escapeHtml(msg) +
+                "</div>"
+            );
+          }
+        }
+      });
+    })
+    .catch(function () {
+      var resultsEl = document.getElementById("sqlResults");
+      if (resultsEl) {
+        resultsEl.insertAdjacentHTML(
+          "beforeend",
+          '<div class="sql-results-msg error" style="margin-top:8px">Profile save failed (network). Open the SQL IDE from <strong>http://localhost:3000</strong> so requests reach the API.</div>'
+        );
+      }
+    });
+}
+
 function sqlRun() {
   var out = document.getElementById("sqlResults");
   var btn = document.getElementById("sqlRunBtn");
@@ -298,12 +355,17 @@ function sqlRun() {
   if (out) out.innerHTML = '<span class="loading">Running...</span>';
   try {
     var results = sqlDb.exec(sql);
-    sqlRefreshExplorer();
+    try {
+      sqlRefreshExplorer();
+    } catch (explorerErr) {
+      console.warn("sqlRefreshExplorer:", explorerErr);
+    }
     if (!results || !results.length) {
       sqlShowResultsSuccessExecuted();
     } else {
       renderExecResults(out, results);
     }
+    sqlAutoSaveSuccessfulScript(sql);
     persistLocal();
     scheduleCloudPersist();
   } catch (err) {
@@ -487,14 +549,14 @@ function saveWorkspaceToCloud(silent) {
     return;
   }
   if (!sqlDb || !sqlJsModule) return;
-  var base = window.API_BASE || "";
   var data = sqlDb.export();
   var ed = document.getElementById("editor");
   var body = {
     sqliteBase64: uint8ToBase64(data),
     editorScript: ed ? ed.value : "",
   };
-  fetch(base + "/api/sql-workspace", {
+  var wsUrl = typeof window.apiUrl === "function" ? window.apiUrl("/api/sql-workspace") : (window.API_BASE || "") + "/api/sql-workspace";
+  fetch(wsUrl, {
     method: "PUT",
     headers: window.getAuthHeaders(),
     body: JSON.stringify(body),
@@ -526,8 +588,8 @@ function saveWorkspaceToCloud(silent) {
 }
 
 function fetchCloudWorkspace() {
-  var base = window.API_BASE || "";
-  return fetch(base + "/api/sql-workspace", {
+  var wsUrl = typeof window.apiUrl === "function" ? window.apiUrl("/api/sql-workspace") : (window.API_BASE || "") + "/api/sql-workspace";
+  return fetch(wsUrl, {
     headers: window.getAuthHeaders(),
   }).then(function (r) {
     return r.json().then(function (j) {
@@ -704,13 +766,13 @@ function wireSqlIdeChrome() {
 
   if (loggedIn && currentBadgeWrap && topBarBrand) {
     topBarBrand.style.display = "none";
-    var base = window.API_BASE || "";
     var headers = {};
     if (typeof window.getAuthHeaders === "function") {
       var h = window.getAuthHeaders();
       if (h && h.Authorization) headers.Authorization = h.Authorization;
     }
-    fetch(base + "/api/auth/me", { headers: headers })
+    var meUrl = typeof window.apiUrl === "function" ? window.apiUrl("/api/auth/me") : (window.API_BASE || "") + "/api/auth/me";
+    fetch(meUrl, { headers: headers })
       .then(function (r) {
         return r.ok ? r.json() : null;
       })

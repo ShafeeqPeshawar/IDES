@@ -6,6 +6,7 @@ const mongoose = require("mongoose");
 const authRoutes = require("./routes/auth");
 const programRoutes = require("./routes/programs");
 const sqlWorkspaceRoutes = require("./routes/sqlWorkspace");
+const sqlProgramRoutes = require("./routes/sqlPrograms");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -22,6 +23,7 @@ app.use(express.json({ limit: "6mb" }));
 app.use("/api/auth", authRoutes);
 app.use("/api/programs", programRoutes);
 app.use("/api/sql-workspace", sqlWorkspaceRoutes);
+app.use("/api/sql-programs", sqlProgramRoutes);
 
 app.use(express.static(path.join(__dirname, "..")));
 app.get("*", (req, res, next) => {
